@@ -4,138 +4,270 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Studio IG - Админ-панель</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 16px;
+        }
+        .container { max-width: 600px; margin: 0 auto; }
+        .header {
+            background: linear-gradient(135deg, #ff69b4, #ff1493);
+            color: white;
+            padding: 20px;
+            border-radius: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .section {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        button {
+            background: #ff69b4;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+        }
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            background: white;
+            border-radius: 30px;
+            cursor: pointer;
+        }
+        .tab.active {
+            background: #ff69b4;
+            color: white;
+        }
+        .booking-card {
+            background: #f9f9f9;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #ff69b4;
+        }
+        .booking-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .date { color: #ff69b4; font-weight: bold; }
+        .time { background: #ff69b4; color: white; padding: 2px 8px; border-radius: 20px; font-size: 12px; }
+        .status { padding: 2px 8px; border-radius: 20px; background: #ff69b4; color: white; font-size: 12px; }
+        .status.completed { background: #4caf50; }
+        .client { margin: 10px 0; }
+        .client strong { font-size: 16px; display: block; }
+        .service {
+            background: #fff;
+            padding: 10px;
+            border-radius: 10px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+        .service span { color: #ff69b4; font-weight: bold; }
+        .comment {
+            background: #eee;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+        .actions { display: flex; gap: 10px; margin-top: 10px; }
+        .btn-success { background: #4caf50; padding: 8px; }
+        .btn-danger { background: #f44336; padding: 8px; }
+        .loading, .empty { text-align: center; padding: 40px; color: #999; }
+        .filters { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        .filters input { margin-bottom: 0; flex: 1; }
+        .filters button { width: auto; padding: 12px 16px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        .stat-card {
+            background: #f9f9f9;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+        }
+        .stat-value { font-size: 28px; font-weight: bold; color: #ff69b4; }
+        .client-row {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        .client-row strong { display: block; }
+    </style>
     <script src="supabase-config.js"></script>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>👑 Studio IG</h1>
-            <p>Админ-панель</p>
+            <p>Ирина Гараева</p>
         </div>
 
-        <!-- Вход по паролю -->
         <div id="loginPanel" class="section">
-            <h2>🔐 Вход</h2>
-            <div class="form-group">
-                <label>Пароль</label>
-                <input type="password" id="adminPassword" placeholder="Введите пароль">
-            </div>
-            <button onclick="checkPassword()" class="btn-primary">Войти</button>
+            <input type="password" id="adminPassword" placeholder="Введите пароль">
+            <button onclick="checkPassword()">Войти</button>
         </div>
 
-        <!-- Админ-панель (скрыта) -->
         <div id="adminPanel" style="display: none;">
             <div class="tabs">
-                <button class="tab-btn active" onclick="showTab('bookings')">📋 Записи</button>
-                <button class="tab-btn" onclick="showTab('clients')">👥 Клиенты</button>
-                <button class="tab-btn" onclick="showTab('stats')">📊 Статистика</button>
+                <div class="tab active" onclick="showTab('bookings')">📋 Записи</div>
+                <div class="tab" onclick="showTab('clients')">👥 Клиенты</div>
+                <div class="tab" onclick="showTab('stats')">📊 Статистика</div>
             </div>
 
-            <div id="bookingsTab" class="tab-content active">
+            <div id="bookingsTab">
                 <div class="section">
-                    <h2>Все записи</h2>
                     <div class="filters">
                         <input type="date" id="filterDate" placeholder="Фильтр по дате">
-                        <button onclick="filterBookings()" class="btn-primary" style="width: auto; padding: 8px 16px;">Фильтр</button>
-                        <button onclick="loadAllBookings()" class="btn-primary" style="width: auto; padding: 8px 16px; background: #666;">Сбросить</button>
+                        <button onclick="filterBookings()">🔍 Фильтр</button>
+                        <button onclick="loadAllBookings()" style="background:#666;">🔄 Все</button>
                     </div>
-                    <div id="bookingsList" class="bookings-list">
-                        <div class="loading">Загрузка...</div>
-                    </div>
+                    <div id="bookingsList"><div class="loading">Загрузка...</div></div>
                 </div>
             </div>
 
-            <div id="clientsTab" class="tab-content">
+            <div id="clientsTab" style="display: none;">
                 <div class="section">
-                    <h2>База клиентов</h2>
-                    <div id="clientsList" class="clients-list">
-                        <div class="loading">Загрузка...</div>
-                    </div>
+                    <div id="clientsList"><div class="loading">Загрузка...</div></div>
                 </div>
             </div>
 
-            <div id="statsTab" class="tab-content">
+            <div id="statsTab" style="display: none;">
                 <div class="section">
-                    <h2>Статистика</h2>
-                    <div id="stats" class="stats">
-                        <div class="loading">Загрузка...</div>
-                    </div>
+                    <div id="stats"><div class="loading">Загрузка...</div></div>
                 </div>
             </div>
-        </div>
-
-        <div class="footer">
-            <a href="index.html">← На главную</a>
         </div>
     </div>
 
     <script>
         const ADMIN_PASSWORD = 'studioig2024';
 
-        function checkPassword() {
+        async function checkPassword() {
             if (document.getElementById('adminPassword').value === ADMIN_PASSWORD) {
                 document.getElementById('loginPanel').style.display = 'none';
                 document.getElementById('adminPanel').style.display = 'block';
-                loadAllBookings();
-                loadAllClients();
-                loadStats();
+                await loadAllBookings();
+                await loadAllClients();
+                await loadStats();
             } else {
-                alert('Неверный пароль!');
+                alert('❌ Неверный пароль!');
             }
         }
 
         function showTab(tab) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.getElementById(`${tab}Tab`).classList.add('active');
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('bookingsTab').style.display = 'none';
+            document.getElementById('clientsTab').style.display = 'none';
+            document.getElementById('statsTab').style.display = 'none';
+            document.getElementById(`${tab}Tab`).style.display = 'block';
+            
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             event.target.classList.add('active');
-            if (tab === 'bookings') loadAllBookings();
-            if (tab === 'clients') loadAllClients();
-            if (tab === 'stats') loadStats();
         }
 
         async function loadAllBookings() {
-            const bookings = await getBookings();
-            displayBookings(bookings);
+            try {
+                const bookings = await getBookings();
+                console.log('✅ Загружено записей:', bookings.length);
+                displayBookings(bookings);
+            } catch(e) {
+                console.error('❌ Ошибка:', e);
+                document.getElementById('bookingsList').innerHTML = '<div class="empty">❌ Ошибка: ' + e.message + '</div>';
+            }
         }
 
         async function filterBookings() {
             const date = document.getElementById('filterDate').value;
             if (!date) { loadAllBookings(); return; }
             const all = await getBookings();
-            displayBookings(all.filter(b => b.date === date));
+            const filtered = all.filter(b => b.date === date);
+            displayBookings(filtered);
         }
 
         function displayBookings(bookings) {
             const container = document.getElementById('bookingsList');
-            if (bookings.length === 0) {
-                container.innerHTML = '<div class="empty">Нет записей</div>';
+            if (!bookings || bookings.length === 0) {
+                container.innerHTML = '<div class="empty">📭 Нет записей</div>';
                 return;
             }
-            container.innerHTML = bookings.map(b => `
-                <div class="booking-card ${b.status === 'completed' ? 'completed' : ''}">
-                    <div class="booking-header">
-                        <span class="booking-date">📅 ${b.date}</span>
-                        <span class="booking-time">⏰ ${b.time}</span>
-                        <span class="booking-status ${b.status}">${b.status === 'active' ? 'Активна' : 'Выполнена'}</span>
+
+            let html = '';
+            for (let b of bookings) {
+                const clientName = b.clientName || b.client_name || 'Имя не указано';
+                const phone = b.phone || 'Телефон не указан';
+                const serviceName = b.serviceName || b.service_name || 'Услуга не указана';
+                const servicePrice = b.servicePrice || b.service_price || 0;
+                const comment = b.comment || '';
+                const date = b.date || 'Дата не указана';
+                const time = b.time || 'Время не указано';
+                const status = b.status || 'active';
+                const id = b.id;
+
+                html += `
+                    <div class="booking-card">
+                        <div class="booking-header">
+                            <span class="date">📅 ${date}</span>
+                            <span class="time">⏰ ${time}</span>
+                            <span class="status ${status === 'completed' ? 'completed' : ''}">
+                                ${status === 'active' ? '🟢 Активна' : '✅ Выполнена'}
+                            </span>
+                        </div>
+                        <div class="client">
+                            <strong>👤 ${escapeHtml(clientName)}</strong>
+                            <span>📞 ${escapeHtml(phone)}</span>
+                        </div>
+                        <div class="service">
+                            <strong>💅 ${escapeHtml(serviceName)}</strong>
+                            <span>💰 ${servicePrice} ₽</span>
+                        </div>
+                        ${comment ? `<div class="comment">📝 ${escapeHtml(comment)}</div>` : ''}
+                        <div class="actions">
+                            ${status === 'active' ? `<button class="btn-success" onclick="markCompleted('${id}')">✅ Выполнено</button>` : ''}
+                            <button class="btn-danger" onclick="deleteBookingItem('${id}')">🗑️ Удалить</button>
+                        </div>
                     </div>
-                    <div class="booking-client">
-                        <strong>👤 ${b.client_name}</strong>
-                        <span>📞 ${b.phone}</span>
-                    </div>
-                    <div class="booking-service">💅 ${b.service_name} | ${b.service_price}₽</div>
-                    ${b.comment ? `<div style="color:#666; font-size:12px;">📝 ${b.comment}</div>` : ''}
-                    <div class="booking-actions">
-                        ${b.status === 'active' ? `<button onclick="markCompleted('${b.id}')" class="btn-success">✅ Выполнено</button>` : ''}
-                        <button onclick="deleteBookingItem('${b.id}')" class="btn-danger">🗑️ Удалить</button>
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
         }
 
         async function markCompleted(id) {
-            if (confirm('Отметить как выполненную?')) {
+            if (confirm('✅ Отметить запись как выполненную?')) {
                 await updateBookingStatus(id, 'completed');
                 loadAllBookings();
                 loadStats();
@@ -143,7 +275,7 @@
         }
 
         async function deleteBookingItem(id) {
-            if (confirm('Удалить запись?')) {
+            if (confirm('🗑️ Удалить запись?')) {
                 await deleteBooking(id);
                 loadAllBookings();
                 loadStats();
@@ -151,39 +283,53 @@
         }
 
         async function loadAllClients() {
-            const clients = await getClients();
-            const container = document.getElementById('clientsList');
-            if (clients.length === 0) {
-                container.innerHTML = '<div class="empty">Нет клиентов</div>';
-                return;
+            try {
+                const clients = await getClients();
+                const container = document.getElementById('clientsList');
+                if (!clients || clients.length === 0) {
+                    container.innerHTML = '<div class="empty">👥 Нет клиентов</div>';
+                    return;
+                }
+                let html = `<div style="margin-bottom:15px;"><strong>Всего клиентов: ${clients.length}</strong></div>`;
+                for (let c of clients) {
+                    html += `
+                        <div class="client-row">
+                            <strong>${escapeHtml(c.name || 'Имя не указано')}</strong>
+                            📞 ${escapeHtml(c.phone || 'Телефон не указан')}
+                        </div>
+                    `;
+                }
+                container.innerHTML = html;
+            } catch(e) {
+                console.error(e);
+                document.getElementById('clientsList').innerHTML = '<div class="empty">❌ Ошибка</div>';
             }
-            container.innerHTML = `
-                <div class="clients-table">
-                    <div class="clients-header"><span>Имя</span><span>Телефон</span></div>
-                    ${clients.map(c => `<div class="client-row"><span>${c.name}</span><span>📞 ${c.phone}</span></div>`).join('')}
-                </div>
-            `;
         }
 
         async function loadStats() {
-            const bookings = await getBookings();
-            const clients = await getClients();
-            const today = new Date().toISOString().split('T')[0];
-            const todayBookings = bookings.filter(b => b.date === today);
-            const active = bookings.filter(b => b.status === 'active');
-            const completed = bookings.filter(b => b.status === 'completed');
-            const revenue = completed.reduce((s, b) => s + (b.service_price || 0), 0);
-            
-            document.getElementById('stats').innerHTML = `
-                <div class="stats-grid">
-                    <div class="stat-card"><div class="stat-value">${bookings.length}</div><div class="stat-label">Всего записей</div></div>
-                    <div class="stat-card"><div class="stat-value">${todayBookings.length}</div><div class="stat-label">Сегодня</div></div>
-                    <div class="stat-card"><div class="stat-value">${active.length}</div><div class="stat-label">Активных</div></div>
-                    <div class="stat-card"><div class="stat-value">${completed.length}</div><div class="stat-label">Выполнено</div></div>
-                    <div class="stat-card"><div class="stat-value">${clients.length}</div><div class="stat-label">Клиентов</div></div>
-                    <div class="stat-card"><div class="stat-value">${revenue}₽</div><div class="stat-label">Выручка</div></div>
-                </div>
-            `;
+            try {
+                const bookings = await getBookings();
+                const clients = await getClients();
+                const today = new Date().toISOString().split('T')[0];
+                const todayBookings = bookings.filter(b => b.date === today);
+                const active = bookings.filter(b => b.status === 'active');
+                const completed = bookings.filter(b => b.status === 'completed');
+                const revenue = completed.reduce((sum, b) => sum + (b.servicePrice || b.service_price || 0), 0);
+                
+                document.getElementById('stats').innerHTML = `
+                    <div class="stats-grid">
+                        <div class="stat-card"><div class="stat-value">${bookings.length}</div><div class="stat-label">Всего записей</div></div>
+                        <div class="stat-card"><div class="stat-value">${todayBookings.length}</div><div class="stat-label">Сегодня</div></div>
+                        <div class="stat-card"><div class="stat-value">${active.length}</div><div class="stat-label">Активных</div></div>
+                        <div class="stat-card"><div class="stat-value">${completed.length}</div><div class="stat-label">Выполнено</div></div>
+                        <div class="stat-card"><div class="stat-value">${clients.length}</div><div class="stat-label">Клиентов</div></div>
+                        <div class="stat-card"><div class="stat-value">${revenue}₽</div><div class="stat-label">Выручка</div></div>
+                    </div>
+                `;
+            } catch(e) {
+                console.error(e);
+                document.getElementById('stats').innerHTML = '<div class="empty">❌ Ошибка</div>';
+            }
         }
     </script>
 </body>
