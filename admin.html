@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Studio IG - Админ-панель</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="supabase-config.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>👑 Studio IG</h1>
+            <p>Админ-панель</p>
+        </div>
+
+        <!-- Вход по паролю -->
+        <div id="loginPanel" class="section">
+            <h2>🔐 Вход</h2>
+            <div class="form-group">
+                <label>Пароль</label>
+                <input type="password" id="adminPassword" placeholder="Введите пароль">
+            </div>
+            <button onclick="checkPassword()" class="btn-primary">Войти</button>
+        </div>
+
+        <!-- Админ-панель (скрыта) -->
+        <div id="adminPanel" style="display: none;">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="showTab('bookings')">📋 Записи</button>
+                <button class="tab-btn" onclick="showTab('clients')">👥 Клиенты</button>
+                <button class="tab-btn" onclick="showTab('stats')">📊 Статистика</button>
+            </div>
+
+            <div id="bookingsTab" class="tab-content active">
+                <div class="section">
+                    <h2>Все записи</h2>
+                    <div class="filters">
+                        <input type="date" id="filterDate" placeholder="Фильтр по дате">
+                        <button onclick="filterBookings()" class="btn-primary" style="width: auto; padding: 8px 16px;">Фильтр</button>
+                        <button onclick="loadAllBookings()" class="btn-primary" style="width: auto; padding: 8px 16px; background: #666;">Сбросить</button>
+                    </div>
+                    <div id="bookingsList" class="bookings-list">
+                        <div class="loading">Загрузка...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="clientsTab" class="tab-content">
+                <div class="section">
+                    <h2>База клиентов</h2>
+                    <div id="clientsList" class="clients-list">
+                        <div class="loading">Загрузка...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="statsTab" class="tab-content">
+                <div class="section">
+                    <h2>Статистика</h2>
+                    <div id="stats" class="stats">
+                        <div class="loading">Загрузка...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <a href="index.html">← На главную</a>
+        </div>
+    </div>
+
+    <script>
+        const ADMIN_PASSWORD = 'studioig2024';
+
+        function checkPassword() {
+            if (document.getElementById('adminPassword').value === ADMIN_PASSWORD) {
+                document.getElementById('loginPanel').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
+                loadAllBookings();
+                loadAllClients();
+                loadStats();
+            } else {
+                alert('Неверный пароль!');
+            }
+        }
+
+        function showTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.getElementById(`${tab}Tab`).classList.add('active');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            if (tab === 'bookings') loadAllBookings();
+            if (tab === 'clients') loadAllClients();
+            if (tab === 'stats') loadStats();
+        }
+
+        async function loadAllBookings() {
+            const bookings = await getBookings();
+            displayBookings(bookings);
+        }
+
+        async function filterBookings() {
+            const date = document.getElementById('filterDate').value;
+            if (!date) { loadAllBookings(); return; }
+            const all = await getBookings();
+            displayBookings(all.filter(b => b.date === date));
+        }
+
+        function displayBookings(bookings) {
+            const container = document.getElementById('bookingsList');
+            if (bookings.length === 0) {
+                container.innerHTML = '<div class="empty">Нет записей</div>';
+                return;
+            }
+            container.innerHTML = bookings.map(b => `
+                <div class="booking-card ${b.status === 'completed' ? 'completed' : ''}">
+                    <div class="booking-header">
+                        <span class="booking-date">📅 ${b.date}</span>
+                        <span class="booking-time">⏰ ${b.time}</span>
+                        <span class="booking-status ${b.status}">${b.status === 'active' ? 'Активна' : 'Выполнена'}</span>
+                    </div>
+                    <div class="booking-client">
+                        <strong>👤 ${b.client_name}</strong>
+                        <span>📞 ${b.phone}</span>
+                    </div>
+                    <div class="booking-service">💅 ${b.service_name} | ${b.service_price}₽</div>
+                    ${b.comment ? `<div style="color:#666; font-size:12px;">📝 ${b.comment}</div>` : ''}
+                    <div class="booking-actions">
+                        ${b.status === 'active' ? `<button onclick="markCompleted('${b.id}')" class="btn-success">✅ Выполнено</button>` : ''}
+                        <button onclick="deleteBookingItem('${b.id}')" class="btn-danger">🗑️ Удалить</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function markCompleted(id) {
+            if (confirm('Отметить как выполненную?')) {
+                await updateBookingStatus(id, 'completed');
+                loadAllBookings();
+                loadStats();
+            }
+        }
+
+        async function deleteBookingItem(id) {
+            if (confirm('Удалить запись?')) {
+                await deleteBooking(id);
+                loadAllBookings();
+                loadStats();
+            }
+        }
+
+        async function loadAllClients() {
+            const clients = await getClients();
+            const container = document.getElementById('clientsList');
+            if (clients.length === 0) {
+                container.innerHTML = '<div class="empty">Нет клиентов</div>';
+                return;
+            }
+            container.innerHTML = `
+                <div class="clients-table">
+                    <div class="clients-header"><span>Имя</span><span>Телефон</span></div>
+                    ${clients.map(c => `<div class="client-row"><span>${c.name}</span><span>📞 ${c.phone}</span></div>`).join('')}
+                </div>
+            `;
+        }
+
+        async function loadStats() {
+            const bookings = await getBookings();
+            const clients = await getClients();
+            const today = new Date().toISOString().split('T')[0];
+            const todayBookings = bookings.filter(b => b.date === today);
+            const active = bookings.filter(b => b.status === 'active');
+            const completed = bookings.filter(b => b.status === 'completed');
+            const revenue = completed.reduce((s, b) => s + (b.service_price || 0), 0);
+            
+            document.getElementById('stats').innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-value">${bookings.length}</div><div class="stat-label">Всего записей</div></div>
+                    <div class="stat-card"><div class="stat-value">${todayBookings.length}</div><div class="stat-label">Сегодня</div></div>
+                    <div class="stat-card"><div class="stat-value">${active.length}</div><div class="stat-label">Активных</div></div>
+                    <div class="stat-card"><div class="stat-value">${completed.length}</div><div class="stat-label">Выполнено</div></div>
+                    <div class="stat-card"><div class="stat-value">${clients.length}</div><div class="stat-label">Клиентов</div></div>
+                    <div class="stat-card"><div class="stat-value">${revenue}₽</div><div class="stat-label">Выручка</div></div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

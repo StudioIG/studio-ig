@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Studio IG - Запись на маникюр</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="supabase-config.js"></script>
+    <style>
+        /* Стили для всплывающего окна */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 300px;
+            text-align: center;
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .modal-icon {
+            font-size: 50px;
+            margin-bottom: 15px;
+        }
+        .modal-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ff69b4;
+            margin-bottom: 15px;
+        }
+        .modal-text {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        .modal-btn {
+            background: #ff69b4;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .master-info {
+            background: #fff5f5;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .master-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ff69b4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💅 Studio IG</h1>
+            <p>Студия маникюра и педикюра</p>
+        </div>
+
+        <!-- Информация о мастере -->
+        <div class="master-info">
+            <div class="master-name">Ирина Гараева</div>
+            <p>💼 Мастер-преподаватель | Опыт 8 лет</p>
+            <p>📍 г. Москва, м. Дмитровская</p>
+        </div>
+
+        <!-- Свободные места на сегодня -->
+        <div class="section">
+            <h2>📅 Сегодня свободно:</h2>
+            <div class="slots" id="slots">
+                <div class="loading">Загрузка...</div>
+            </div>
+        </div>
+
+        <!-- Форма записи -->
+        <div class="section">
+            <h2>📝 Записаться</h2>
+            <form id="bookingForm">
+                <div class="form-group">
+                    <label>Ваше имя *</label>
+                    <input type="text" id="clientName" required placeholder="Введите ваше имя">
+                </div>
+                <div class="form-group">
+                    <label>Телефон *</label>
+                    <input type="tel" id="phone" required placeholder="+7 (XXX) XXX-XX-XX">
+                </div>
+                <div class="form-group">
+                    <label>Услуга *</label>
+                    <select id="service" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Желаемая дата *</label>
+                    <input type="date" id="date" required>
+                </div>
+                <div class="form-group">
+                    <label>Желаемое время *</label>
+                    <select id="time" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Комментарий</label>
+                    <textarea id="comment" rows="2" placeholder="Аллергии, пожелания..."></textarea>
+                </div>
+                <button type="submit" class="btn-primary">✍️ Записаться</button>
+            </form>
+        </div>
+
+        <div class="footer">
+            <a href="index.html">← На главную</a>
+            <p>© 2024 Studio IG | Ирина Гараева</p>
+        </div>
+    </div>
+
+    <!-- Всплывающее окно -->
+    <div id="successModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-icon">✅</div>
+            <div class="modal-title">Вы успешно записались!</div>
+            <div class="modal-text" id="modalText"></div>
+            <button class="modal-btn" onclick="closeModal()">Отлично!</button>
+        </div>
+    </div>
+
+    <script>
+        let services = [];
+        const timeSlots = ['10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00'];
+
+        function showModal(message) {
+            document.getElementById('modalText').innerHTML = message;
+            document.getElementById('successModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('successModal').style.display = 'none';
+            // Очищаем форму
+            document.getElementById('bookingForm').reset();
+            // Устанавливаем сегодняшнюю дату
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('date').value = today;
+            loadTimeOptions(today);
+            loadAvailableSlots();
+        }
+
+        // Загрузка услуг
+        async function loadServices() {
+            services = await getServices();
+            const select = document.getElementById('service');
+            select.innerHTML = '';
+            services.forEach(s => {
+                const option = document.createElement('option');
+                option.value = s.id;
+                option.textContent = `${s.name} - ${s.price}₽ (${s.duration} мин)`;
+                select.appendChild(option);
+            });
+        }
+
+        // Загрузка свободных мест
+        async function loadAvailableSlots() {
+            const slotsDiv = document.getElementById('slots');
+            const available = await getAvailableSlots();
+            if (available.length === 0) {
+                slotsDiv.innerHTML = '<div class="no-slots">😔 Нет свободных мест на сегодня</div>';
+            } else {
+                slotsDiv.innerHTML = available.map(time => `<button class="slot-btn" onclick="selectTime('${time}')">${time}</button>`).join('');
+            }
+        }
+
+        // Загрузка доступного времени для выбранной даты
+        async function loadTimeOptions(date) {
+            const timeSelect = document.getElementById('time');
+            const bookings = await getBookings();
+            const bookedTimes = bookings.filter(b => b.date === date).map(b => b.time);
+            const available = timeSlots.filter(t => !bookedTimes.includes(t));
+            
+            timeSelect.innerHTML = '';
+            if (available.length === 0) {
+                timeSelect.innerHTML = '<option disabled>Нет свободного времени</option>';
+            } else {
+                available.forEach(time => {
+                    const option = document.createElement('option');
+                    option.value = time;
+                    option.textContent = time;
+                    timeSelect.appendChild(option);
+                });
+            }
+        }
+
+        function selectTime(time) {
+            document.getElementById('time').value = time;
+            document.getElementById('time').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Отправка формы
+        document.getElementById('bookingForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const clientName = document.getElementById('clientName').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const serviceId = document.getElementById('service').value;
+            const date = document.getElementById('date').value;
+            const time = document.getElementById('time').value;
+            const comment = document.getElementById('comment').value;
+            
+            if (!clientName || !phone || !date || !time) {
+                alert('Пожалуйста, заполните все поля');
+                return;
+            }
+            
+            const selectedService = services.find(s => s.id == serviceId);
+            if (!selectedService) return;
+            
+            // Проверка на двойную запись
+            const bookings = await getBookings();
+            if (bookings.find(b => b.date === date && b.time === time)) {
+                alert('❌ Это время уже занято! Выберите другое время.');
+                return;
+            }
+            
+            const booking = {
+                clientName, phone, date, time,
+                serviceName: selectedService.name,
+                servicePrice: selectedService.price,
+                comment
+            };
+            
+            try {
+                await saveBooking(booking);
+                await saveClient({ name: clientName, phone, comment });
+                
+                const formattedDate = new Date(date).toLocaleDateString('ru-RU', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long'
+                });
+                
+                const modalMessage = `
+                    📅 Дата: ${formattedDate}<br>
+                    ⏰ Время: ${time}<br>
+                    💅 Услуга: ${selectedService.name}<br>
+                    💰 Сумма: ${selectedService.price}₽<br><br>
+                    ✨ Ждем вас в Studio IG!
+                `;
+                
+                showModal(modalMessage);
+                
+            } catch (error) {
+                alert('❌ Ошибка при записи. Попробуйте позже.');
+            }
+        });
+
+        // Настройка даты
+        function setMinDate() {
+            const today = new Date().toISOString().split('T')[0];
+            const maxDate = new Date();
+            maxDate.setMonth(maxDate.getMonth() + 2);
+            const input = document.getElementById('date');
+            input.min = today;
+            input.max = maxDate.toISOString().split('T')[0];
+            input.value = today;
+            loadTimeOptions(today);
+        }
+
+        document.getElementById('date').addEventListener('change', (e) => {
+            loadTimeOptions(e.target.value);
+        });
+
+        // Запуск
+        loadServices();
+        loadAvailableSlots();
+        setMinDate();
+    </script>
+</body>
+</html>

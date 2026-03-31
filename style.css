@@ -1,0 +1,336 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #fff 100%);
+    min-height: 100vh;
+    padding: 16px;
+}
+
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Шапка */
+.header {
+    text-align: center;
+    margin-bottom: 20px;
+    padding: 20px;
+    background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%);
+    border-radius: 20px;
+    color: white;
+    box-shadow: 0 4px 15px rgba(255,105,180,0.3);
+}
+
+.header h1 {
+    font-size: 28px;
+    margin-bottom: 8px;
+}
+
+.header p {
+    opacity: 0.9;
+    font-size: 14px;
+}
+
+/* Секции */
+.section {
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.section h2 {
+    font-size: 18px;
+    color: #333;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #ff69b4;
+    display: inline-block;
+}
+
+/* Формы */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #555;
+    font-size: 14px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-size: 16px;
+    font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #ff69b4;
+}
+
+/* Кнопки */
+.btn-primary {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.btn-primary:active {
+    transform: scale(0.98);
+}
+
+/* Свободные места */
+.slots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.slot-btn {
+    background: #ff69b4;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+}
+
+.no-slots {
+    text-align: center;
+    color: #999;
+    padding: 20px;
+}
+
+/* Сообщения */
+.message {
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    display: none;
+}
+
+.message.success {
+    background: #d4edda;
+    color: #155724;
+    display: block;
+}
+
+.message.error {
+    background: #f8d7da;
+    color: #721c24;
+    display: block;
+}
+
+/* Админ-панель */
+.tabs {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 20px;
+    background: white;
+    border-radius: 50px;
+    padding: 5px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 12px;
+    background: none;
+    border: none;
+    border-radius: 50px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.tab-btn.active {
+    background: #ff69b4;
+    color: white;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Карточки записей */
+.booking-card {
+    background: #f9f9f9;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 12px;
+    border-left: 4px solid #ff69b4;
+}
+
+.booking-card.completed {
+    border-left-color: #4caf50;
+    opacity: 0.7;
+}
+
+.booking-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.booking-date {
+    font-weight: bold;
+    color: #ff69b4;
+}
+
+.booking-time {
+    background: #ff69b4;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 12px;
+}
+
+.booking-status {
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 20px;
+}
+
+.booking-status.active {
+    background: #ff69b4;
+    color: white;
+}
+
+.booking-status.completed {
+    background: #4caf50;
+    color: white;
+}
+
+.booking-client {
+    margin-bottom: 8px;
+}
+
+.booking-client strong {
+    font-size: 16px;
+}
+
+.booking-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.btn-success {
+    background: #4caf50;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.btn-danger {
+    background: #f44336;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+/* Статистика */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.stat-card {
+    background: #f9f9f9;
+    border-radius: 15px;
+    padding: 20px;
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 28px;
+    font-weight: bold;
+    color: #ff69b4;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+}
+
+/* Клиенты */
+.clients-table {
+    width: 100%;
+}
+
+.clients-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: #f0f0f0;
+    padding: 10px;
+    border-radius: 10px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.client-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 12px 10px;
+    border-bottom: 1px solid #eee;
+}
+
+/* Подвал */
+.footer {
+    text-align: center;
+    margin-top: 30px;
+    padding: 20px;
+    color: #999;
+    font-size: 12px;
+}
+
+.footer a {
+    color: #ff69b4;
+    text-decoration: none;
+}
+
+.loading {
+    text-align: center;
+    padding: 30px;
+    color: #999;
+}
+
+.empty {
+    text-align: center;
+    padding: 30px;
+    color: #999;
+}
